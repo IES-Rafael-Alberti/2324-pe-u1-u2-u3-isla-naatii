@@ -74,6 +74,7 @@ Tu posición es (3, 3)  #aunque internamente esté en la posición (2, 2)
 """
 
 import random
+import os #* Lo usaré para limpiar la consola.
 
 DIMENSIONES = 5
 
@@ -81,6 +82,8 @@ DIMENSIONES = 5
 CELDA_TESORO = "X"
 CELDA_TRAMPA = "!"
 CELDA_VACIA = " "
+CELDA_JUGADOR = "🙍🏼"
+
 
 # Constantes para las pistas de los movimientos
 ARRIBA = "^"
@@ -96,19 +99,20 @@ TESORO_ENCONTRADO = 2
 TRAMPA_ENCONTRADA = 3
 PISTA_ENCONTRADA = 4
 VACIA_ENCONTRADA = 5
+JUGADOR_ENCONTRADO = 6
 MOVIMIENTOS_NO_PERMITIDO = [MOVIMIENTO_INVALIDO, TRAMPA_ENCONTRADA]
 
 # Movimientos permitidos
 SALIR = "q"
 MOVIMIENTOS = {"u": (-1, 0), "d": (1, 0), "l": (0, -1), "r": (0, 1), SALIR: (0, 0)}
-
+#? por qué salir es una constante y las demás no?
 # Constantes para las posiciones
 FILAS = 0
 COLUMNAS = 1
 
 # Código oculto del programador para realizar alguna acción que el usuario no sabe que existe. Si encuentras para qué se utiliza igual te sirve en tu aventura...
 CODIGO_OCULTO_PROGRAMADOR = "s"
-
+#! Esto sirve para revelar el mapa oculto.    
 
 def inicializar_juego() -> tuple:
     """
@@ -149,7 +153,8 @@ def generar_mapa() -> list:
     mapa[tesoro_x][tesoro_y] = CELDA_TESORO
 
     # Colocar pistas y trampas
-    ???
+    for i in range(len(mapa)): #! Aquí he colocado 2 fors para recorrer el mapa y que se puedan recorrer las filas y columnas. 
+        for j in range(i):
             if mapa[i][j] != CELDA_TESORO:
                 # Decidir aleatoriamente si colocar una pista, una trampa o vacia.
                 opciones = [genera_pista((tesoro_x, tesoro_y), (i, j))]
@@ -159,8 +164,8 @@ def generar_mapa() -> list:
 
     return mapa
 
-
-def genera_pista():
+#! posicion_tesoro y posicion se declara en la función de arriba por lo que solo deberemos llamarla por parametro según los nombres que exiten dentro de la función.
+def genera_pista(posicion_tesoro:tuple, posicion:tuple):
     """
     Genera una pista para el mapa, en función de donde se encuentre el tesoro.
     Decidirá si la pista es sobre la fila o la columna basada en la aleatoriedad. Ademas tiene en cuenta que
@@ -209,17 +214,17 @@ def pedir_movimiento(mapa: list) -> str:
     return: el movimiento del jugador
     """
     entrada_correcta = False
-
-    entrada = int(input("Ingresa tu movimiento (formato: 'u:arriba', 'd:abajo', 'l:izquierda', 'r:derecha', q:salir): "))
-    while not entrada_correcta:
-        if entrada in MOVIMIENTOS:
+    # todo: Esto no recoge bien las posiciones
+    entrada = input("Ingresa tu movimiento (formato: 'u:arriba', 'd:abajo', 'l:izquierda', 'r:derecha', q:salir): ")
+    while entrada_correcta == False: #! quité la negación de la condición y le pregunté si es == False.
+        if entrada in MOVIMIENTOS: 
             entrada_correcta = True
         elif entrada == CODIGO_OCULTO_PROGRAMADOR:
             imprimir_mapa(mapa)
 
         if not entrada_correcta:
-            entrada = int(input(
-                "Ingresa tu movimiento (formato: 'u:arriba', 'd:abajo', 'l:izquierda', 'r:derecha', q:salir): "))
+            entrada = input(
+                "Ingresa tu movimiento (formato: 'u:arriba', 'd:abajo', 'l:izquierda', 'r:derecha', q:salir): ")
 
     return entrada
 
@@ -233,10 +238,9 @@ def obtener_nueva_posicion(posicion_jugador: tuple, movimiento: str) -> tuple:
     :return: La nueva posición del jugador.
     """
 
-    direccion = MOVIMIENTOS(movimiento)
+    direccion = MOVIMIENTOS[movimiento] #! cambié los parentesis por unos corchetes para acceder al valor de cada movimiento.
     nueva_posicion = (posicion_jugador[FILAS] + direccion[FILAS], posicion_jugador[COLUMNAS] + direccion[COLUMNAS])
     return nueva_posicion
-
 
 def procesar_movimiento(posicion: tuple, mapa: list) -> int:
     """Procesa el movimiento del jugador y devuelve el código de resultado.
@@ -255,20 +259,21 @@ def procesar_movimiento(posicion: tuple, mapa: list) -> int:
         resultado = TRAMPA_ENCONTRADA  # Código para trampa encontrada
     elif mapa[posicion[FILAS]][posicion[COLUMNAS]] != CELDA_VACIA:
         resultado = PISTA_ENCONTRADA  # Código para pista encontrada
-
+    
     return resultado
 
 
-def simbolo_celda(celda):
+def simbolo_celda(celda:str):
     """Retorna el símbolo a pintar en la celda"""
-    if celda != CELDA_VACIA
+    if celda != CELDA_VACIA: #! Bloque de código reparado, faltaban los :
         return DESCONOCIDO
-    else
+    else:
         return CELDA_VACIA 
 
 
 def imprimir_mapa_oculto(mapa: list):
     """Imprime el mapa sin revelar el tesoro ni las trampas."""
+    print(" ".join(str(i + 1) for i in range(len(mapa))))
     for fila in mapa:
         print(" ".join([simbolo_celda(celda) for celda in fila]))
 
@@ -278,8 +283,9 @@ def imprimir_mapa(mapa: list):
     Imprime el mapa.
     :param mapa: El mapa a imprimir.
     """
+    
     for fila in mapa:
-        print fila
+        print(fila) #! Bloque de código reparado faltaba el parentesis de la función print().
 
 
 def muestra_resultado_del_movimiento(resultado: int, nueva_posicion: tuple, mapa: list):
@@ -318,10 +324,10 @@ def jugar():
     movimiento = pedir_movimiento(mapa)
     resultado_movimiento = None
     # Loop principal del juego. El juego termina cuando el jugador realizar movimiento SALIR.
-    while movimiento != SALIR and resultado_movimiento == TESORO_ENCONTRADO:
+    while movimiento != SALIR and resultado_movimiento != TESORO_ENCONTRADO: #! cambié la comprobación de la condicion de resultado_movimiento de == a !=.
 
         # Obtener la nueva posición del jugador y procesar el movimiento
-        nueva_posicion = obtener_nueva_posicion(posicion_jugador)
+        nueva_posicion = obtener_nueva_posicion(posicion_jugador, movimiento)#! agregé el parametro movimiento.
         resultado_movimiento = procesar_movimiento(nueva_posicion, mapa)
 
         muestra_resultado_del_movimiento(resultado_movimiento, nueva_posicion, mapa)
